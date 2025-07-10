@@ -1,0 +1,20 @@
+# Ignorar a pasta de saída do robô
+output/
+
+# Ignorar arquivos de cache e ambiente virtual do Python (se usar)
+__pycache__/
+*.pyc
+.env/
+venv/
+.venv/
+libs/
+
+# Ignorar arquivos de log e relatórios do Robot Framework
+*.log
+*.csv
+*.txt
+*.html
+*.xml
+.robot/
+.vscode/
+results/
