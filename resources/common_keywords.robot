@@ -7,7 +7,6 @@ Library           DateTime
 
 *** Variables ***
 ${BROWSER}        chrome
-${URL_BASE}       https://consulta.tjrs.jus.br/consulta-processual/partes/por-nome?comarca=&tipoPesquisa=F&movimentados=0&&iframe=1&nome=
 ${OUTPUT_DIR}     ${CURDIR}/../output/files/gen
 
 *** Keywords ***
@@ -22,34 +21,38 @@ Close Browser
     Close Browser
 
 Ler Lista De Nomes Do Arquivo
-    [Documentation]    Lê nomes de um arquivo 'nomes.txt', um nome por linha.
-    ${conteudo}=      Get File      nomes.txt
-    ${linhas}=        Split To Lines      ${conteudo}
-    RETURN            ${linhas}
+    [Documentation]    Lê dados de um arquivo CSV (nomes.csv), um conjunto de dados (nome, status, url) por linha.
+    [Arguments]       ${file_path}=nomes.csv 
+    # Nome do arquivo padrão
+    ${conteudo_raw}=  Get File      ${file_path}    encoding=latin-1
+    # Lê o conteúdo completo do arquivo como uma string
+    ${linhas_raw}=    Split To Lines    ${conteudo_raw} 
+    # Divide a string em uma lista de linhas
 
-Acessar Site Com Nome
-    [Documentation]    Navega para a URL base com o nome formatado.
-    [Arguments]       ${nome_formatado}
-    ${url}=           Catenate      SEPARATOR=    ${URL_BASE}    ${nome_formatado}
-    Go To             ${url}
-
-
-Clicar No Nome Encontrado
-    [Documentation]    Clica no link do nome encontrado na página, esperando que overlays de carregamento desapareçam.
-    [Arguments]       ${nome}
+    # Remove a linha do cabeçalho (a primeira linha)
+    Remove From List  ${linhas_raw}    0 
     
-    Wait Until Element Is Visible     xpath=//a[contains(text(), '${nome}')]      timeout=90s
+    ${dados_processados}=  Create List 
+    # Lista para armazenar as sublistas [Nome, Status, URL]
 
-    Click Element     xpath=//a[contains(text(), '${nome}')]
-    Sleep             20s 
-    #Pequena pausa após o clique para a nova página começar a carregar
+    FOR  ${linha}  IN  @{linhas_raw}
+        # Ignora linhas vazias, se houver
+        Continue For Loop If    '${linha}' == '${EMPTY}'
+        
+        # Divide cada linha em campos usando o ponto e vírgula como delimitador
+        ${campos}=        Split String    ${linha}    separator=;
+        Append To List    ${dados_processados}    ${campos}
+    END
+    RETURN            ${dados_processados} 
+    # Retorna uma lista de listas: [[Nome, Status, URL], ...]
+
 
 Extrair Dados Da Tabela E Salvar CSV
-    [Documentation]    Extrai dados de uma tabela HTML, salva em CSV e extrai parâmetros da URL para log tabular CSV.
+    [Documentation]    Extrai dados de uma tabela HTML, salva em CSV individual e extrai parâmetros da URL para log tabular CSV.
     [Arguments]       ${nome_consultado}
     ${table_xpath}=   Set Variable      xpath=//table[@class='mat-mdc-table mdc-data-table__table cdk-table mat-sort full-width mat-table-responsive']
 
-    # --- NOVO CÓDIGO: EXTRAÇÃO DE PARÂMETROS DA URL E SALVAR EM log-url.csv (COM VÍRGULAS) ---
+    # --- EXTRAÇÃO DE PARÂMETROS DA URL E SALVAR EM log-url.csv (COM VÍRGULAS) ---
     ${LOG_URL_FILENAME}=    Set Variable    log-url.csv
     ${LOG_URL_FILEPATH}=    Join Path       ${OUTPUT_DIR}    ${LOG_URL_FILENAME}
 
@@ -58,7 +61,6 @@ Extrair Dados Da Tabela E Salvar CSV
     Run Keyword If          not ${log_url_exists}    Create File    ${LOG_URL_FILEPATH}    "Nome","CPF/CNPJ","CodParte1g","CodParte2g","Timestamp","URL Completa"\n
 
     ${current_url}=   Get Location 
-    # Obtém a URL atual do navegador
     Log To Console    URL atual para extração de parâmetros: ${current_url}
 
     # Extrair parteSelecionadaNome
@@ -100,7 +102,7 @@ Extrair Dados Da Tabela E Salvar CSV
     Append To File        ${LOG_URL_FILEPATH}    ${log_entry_csv}\n
 
     Log To Console        Parâmetros da URL de ${nome_consultado} salvos em ${LOG_URL_FILEPATH}
-    # --- FIM DO NOVO CÓDIGO ---
+    # --- FIM DO NOVO CÓDIGO DE EXTRAÇÃO DE URL ---
 
     Wait Until Element Is Visible     ${table_xpath}      timeout=30s
 
@@ -141,8 +143,7 @@ Extrair Dados Da Tabela E Salvar CSV
             ${cleaned_text}=  Strip String        ${cleaned_text}
             ${cell_text}=     Replace String      ${cleaned_text}   "      ""
             ${cell_text}=     Replace String      ${cell_text}      '      ${EMPTY}
-            #Append To List    ${row_data}       "${cell_text}"
-            Append To List    ${row_data}         ${cell_text}
+            Append To List    ${row_data}       ${cell_text}
         END
         ${csv_row}=       Catenate      SEPARATOR=,      @{row_data}
         Append To File    ${filepath}       ${csv_row}\n
@@ -154,6 +155,6 @@ Extrair Dados Da Tabela E Salvar CSV
 Log With Timestamp
     [Documentation]    Registra uma mensagem no log com a data e hora atuais.
     [Arguments]        ${message}
-    ${timestamp}=      Get Current Date      result_format=%Y-%m-%d %H:%M:%S
+    ${timestamp}=      Get Current Date    result_format=%Y-%m-%d %H:%M:%S
     Log To Console     [${timestamp}] ${message}
     Append To File     ${OUTPUT_DIR}/logs.txt      [${timestamp}] ${message}\n
