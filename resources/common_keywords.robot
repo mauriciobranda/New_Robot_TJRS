@@ -12,9 +12,22 @@ ${OUTPUT_DIR}     ${CURDIR}/../output/files/gen
 *** Keywords ***
 
 Open Browser To Site
-    [Documentation]    Abre o navegador e maximiza a janela.
-    Open Browser      about:blank    ${BROWSER}
-    Maximize Browser Window
+    [Documentation]    Abre o navegador e maximiza a janela. Ativa o modo headless para rodar em segundo plano.
+    
+    # Argumentos para o modo headless (para Chrome)
+    # Importa a biblioteca selenium.webdriver diretamente para usar ChromeOptions
+    ${chrome_options}=    Evaluate    selenium.webdriver.ChromeOptions()    modules=selenium.webdriver
+    
+    # ATIVA O MODO HEADLESS
+    Call Method    ${chrome_options}    add_argument    --headless
+    
+
+    # Abre o navegador Chrome com as opções definidas (incluindo headless)
+    Open Browser      about:blank    chrome    options=${chrome_options}
+    
+    # A linha abaixo "Maximize Browser Window" pode ser removida ou comentada,
+    # pois --start-maximized nas opções do Chrome já cuida disso no modo headless.
+    # Maximize Browser Window 
 
 Close Browser
     [Documentation]    Fecha o navegador.
