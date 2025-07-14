@@ -43,13 +43,6 @@ Consultar Lista De Nomes
         ELSE
             # Se a tabela NÃO está visível após 30 segundos, consideramos um problema
             Log With Timestamp    ERRO: Tabela de dados não visível após 30s para ${nome_da_parte}. Serviço indisponível ou problema de carregamento.
-            # Opcional: Você pode pegar o HTML aqui para depuração adicional
-            # ${html_pagina_erro}= Get Text xpath=//body
-            # Log To Console    HTML da página com erro: ${html_pagina_erro}
-            # Opcional: Para pular para o próximo nome se a tabela não carregar, descomente a linha abaixo:
-            # Continue For Loop
-            # Se você quer que o script PARE completamente em caso de tabela não visível, use 'Fail' aqui:
-            # Fail    Tabela de dados não visível. Script abortado.
         END
         Sleep             5s
     END
