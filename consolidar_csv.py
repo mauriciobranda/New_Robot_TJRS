@@ -3,11 +3,8 @@ import csv
 import io # Importa o módulo io para String IO
 
 def consolidar_csvs():
-    """
-    Consolida múltiplos arquivos CSV gerados pelo Robot Framework em um único arquivo CSV
-    """
     # --- CONFIGURAÇÃO: CAMINHO DA PASTA DO GOOGLE DRIVE ---
-    GOOGLE_DRIVE_SYNC_FOLDER = r'G:\Meu Drive\ProcessosRobo' # Caminho configurado do Google Drive
+    GOOGLE_DRIVE_SYNC_FOLDER = r'G:\My Drive\ProcessosRobo' # Caminho configurado do Google Drive
 
     # Define o diretório onde os CSVs individuais são gerados (pasta 'gen')
     input_csv_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'output', 'files', 'gen')
