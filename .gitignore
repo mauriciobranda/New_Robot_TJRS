@@ -18,3 +18,4 @@ libs/
 .robot/
 .vscode/
 results/
+*.png

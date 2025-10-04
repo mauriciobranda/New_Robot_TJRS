@@ -6,28 +6,44 @@ Suite Teardown    Close All Browsers
 
 *** Test Cases ***
 Consultar Lista De Nomes
-    [Documentation]    Consulta uma lista de nomes em um site e registra os resultados.
-    ${nomes}=         Ler Lista De Nomes Do Arquivo
+    [Documentation]    Consulta processos usando URLs diretas do arquivo CSV e registra os resultados.
 
-    # Prepara o arquivo de log no início do teste
+    # Prepara o arquivo de log principal no início do teste
     ${data}=          Get Current Date      result_format=%Y-%m-%d
     ${hora}=          Get Time              result_format=%H:%M:%S
     Create File       ${OUTPUT_DIR}/logs.txt      *** LOG DE CONSULTAS ***\nData de execução: ${data} ${hora}\n
 
-    FOR               ${nome}      IN      @{nomes}
-        Log With Timestamp    Iniciando consulta para o nome: ${nome}
-        Acessar Site Com Nome     ${nome}
+    # Ler dados do nomes.csv (agora retorna uma lista de listas: [Nome, Status, URL] para cada linha)
+    # O arquivo nomes.csv deve estar na raiz do projeto (New_Robot/nomes.csv)
+    ${lista_de_partes}=   Ler Lista De Nomes Do Arquivo    nomes.csv
+
+    # Loop principal para cada entrada no CSV de nomes
+    FOR               ${parte_dados}      IN      @{lista_de_partes}
+        # Extrai os dados de cada linha do CSV
+        ${nome_da_parte}=     Set Variable    ${parte_dados}[0] 
+        ${status_da_parte}=   Set Variable    ${parte_dados}[1] 
+        ${url_direta}=        Set Variable    ${parte_dados}[2]
+
+        Log With Timestamp    Iniciando consulta direta para: ${nome_da_parte}
+
+        # Navega diretamente para a URL final do processo
+        Go To             ${url_direta}
         Sleep             5s
-        ${html}=          Get Text      xpath=//body
 
-        ${sem_processo}=      Run Keyword And Return Status    Should Contain    ${html}    Não foram encontrados processos para esse nome com os critérios informados
-        ${tem_resultado}=     Evaluate      not ${sem_processo}
+        # Definir o XPath da tabela (o mesmo usado em Extrair Dados Da Tabela E Salvar CSV)
+        ${table_xpath}=   Set Variable      xpath=//table[@class='mat-mdc-table mdc-data-table__table cdk-table mat-sort full-width mat-table-responsive']
 
-        ${resultado}=     Run Keyword If    ${tem_resultado}    Set Variable    Resultado encontrado para ${nome}
-        ...               ELSE              Set Variable    Não tem resultado para ${nome}
-        Log With Timestamp    NOME CONSULTADO: ${nome} - RESULTADO: ${resultado}
+        # --- NOVA LÓGICA: VERIFICA SE A TABELA DE DADOS ESTÁ VISÍVEL DENTRO DO TEMPO LIMITE ---
+        ${tabela_visivel}=   Run Keyword And Return Status    Wait Until Element Is Visible    ${table_xpath}    timeout=30s
 
-        Run Keyword If    ${tem_resultado}    Clicar No Nome Encontrado      ${nome}
-        Run Keyword If    ${tem_resultado}    Extrair Dados Da Tabela E Salvar CSV      ${nome}
+        IF    ${tabela_visivel}
+            Log With Timestamp    Tabela de dados visível para ${nome_da_parte}. Extraindo dados.
+            # Se a tabela está visível, então prossegue com a extração
+            Extrair Dados Da Tabela E Salvar CSV      ${nome_da_parte}
+        ELSE
+            # Se a tabela NÃO está visível após 30 segundos, consideramos um problema
+            Log With Timestamp    ERRO: Tabela de dados não visível após 30s para ${nome_da_parte}. Serviço indisponível ou problema de carregamento.
+        END
         Sleep             5s
     END
+    Log To Console        Processamento de todos os nomes concluído. Verifique os arquivos CSV na pasta output/files/gen.
