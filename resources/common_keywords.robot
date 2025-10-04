@@ -7,7 +7,7 @@ Library           DateTime
 
 *** Variables ***
 ${BROWSER}        chrome
-${OUTPUT_DIR}     ${CURDIR}/../output/files/gen
+${OUTPUT_DIR}   G:/My Drive/ProcessosRobo/Arquivos_Robo
 
 *** Keywords ***
 
