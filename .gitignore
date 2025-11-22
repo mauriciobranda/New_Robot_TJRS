@@ -12,6 +12,7 @@ libs/
 # Ignorar arquivos de log e relatórios do Robot Framework
 *.log
 *.csv
+!nomes.csv.example
 *.html
 *.xml
 .robot/

@@ -1,0 +1,3 @@
+Nome;Status;URL
+EXEMPLO PESSOA 1;ATIVO;https://www.tjrs.jus.br/site/processos/consulta_publica/?p1=parteSelecionadaNome%3DEXEMPLO%20PESSOA%201%26parteSelecionadaCpfCnpj%3D12345678901%26parteSelecionadaCodParte1g%3D12345%26parteSelecionadaCodParte2g%3D67890
+EXEMPLO PESSOA 2;INATIVO;https://www.tjrs.jus.br/site/processos/consulta_publica/?p1=parteSelecionadaNome%3DEXEMPLO%20PESSOA%202%26parteSelecionadaCpfCnpj%3D98765432109%26parteSelecionadaCodParte1g%3D54321%26parteSelecionadaCodParte2g%3D09876

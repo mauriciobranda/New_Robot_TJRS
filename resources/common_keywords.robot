@@ -35,28 +35,72 @@ Close Browser
 
 Ler Lista De Nomes Do Arquivo
     [Documentation]    Lê dados de um arquivo CSV (nomes.csv), um conjunto de dados (nome, status, url) por linha.
-    [Arguments]       ${file_path}=nomes.csv 
+    [Arguments]       ${file_path}=nomes.csv
     # Nome do arquivo padrão
+
+    # --- VALIDAÇÃO: VERIFICAR SE O ARQUIVO EXISTE ---
+    ${file_exists}=   Run Keyword And Return Status    File Should Exist    ${file_path}
+    IF    not ${file_exists}
+        Log To Console    ERRO CRÍTICO: Arquivo '${file_path}' não encontrado!
+        Log To Console    Certifique-se de que o arquivo existe no diretório do projeto.
+        Log To Console    O arquivo deve conter dados no formato: Nome;Status;URL
+        Fail    Arquivo CSV '${file_path}' não encontrado. Verifique o caminho e tente novamente.
+    END
+
     ${conteudo_raw}=  Get File      ${file_path}    encoding=latin-1
     # Lê o conteúdo completo do arquivo como uma string
-    ${linhas_raw}=    Split To Lines    ${conteudo_raw} 
+    ${linhas_raw}=    Split To Lines    ${conteudo_raw}
     # Divide a string em uma lista de linhas
 
+    # --- VALIDAÇÃO: VERIFICAR SE O ARQUIVO NÃO ESTÁ VAZIO ---
+    ${num_linhas}=    Get Length    ${linhas_raw}
+    IF    ${num_linhas} == 0
+        Log To Console    ERRO: Arquivo '${file_path}' está vazio!
+        Fail    Arquivo CSV '${file_path}' não contém dados.
+    END
+
+    # --- VALIDAÇÃO: VERIFICAR SE TEM PELO MENOS CABEÇALHO + 1 LINHA DE DADOS ---
+    IF    ${num_linhas} < 2
+        Log To Console    ERRO: Arquivo '${file_path}' deve conter cabeçalho + pelo menos uma linha de dados.
+        Log To Console    Formato esperado - Linha 1: Nome;Status;URL
+        Log To Console    Formato esperado - Linha 2+: NOME PESSOA;ATIVO;https://...
+        Fail    Arquivo CSV '${file_path}' não contém dados suficientes (apenas ${num_linhas} linha(s)).
+    END
+
     # Remove a linha do cabeçalho (a primeira linha)
-    Remove From List  ${linhas_raw}    0 
-    
-    ${dados_processados}=  Create List 
+    Remove From List  ${linhas_raw}    0
+
+    ${dados_processados}=  Create List
     # Lista para armazenar as sublistas [Nome, Status, URL]
 
     FOR  ${linha}  IN  @{linhas_raw}
         # Ignora linhas vazias, se houver
         Continue For Loop If    '${linha}' == '${EMPTY}'
-        
+
         # Divide cada linha em campos usando o ponto e vírgula como delimitador
         ${campos}=        Split String    ${linha}    separator=;
+
+        # --- VALIDAÇÃO: VERIFICAR SE A LINHA TEM 3 CAMPOS (Nome, Status, URL) ---
+        ${num_campos}=    Get Length    ${campos}
+        IF    ${num_campos} != 3
+            Log To Console    AVISO: Linha ignorada por formato inválido (${num_campos} campos ao invés de 3): ${linha}
+            Continue For Loop
+        END
+
         Append To List    ${dados_processados}    ${campos}
     END
-    RETURN            ${dados_processados} 
+
+    # --- VALIDAÇÃO: VERIFICAR SE PELO MENOS UMA LINHA VÁLIDA FOI PROCESSADA ---
+    ${num_dados}=     Get Length    ${dados_processados}
+    IF    ${num_dados} == 0
+        Log To Console    ERRO: Nenhuma linha válida encontrada em '${file_path}'!
+        Log To Console    Verifique se as linhas seguem o formato: Nome;Status;URL
+        Fail    Arquivo CSV '${file_path}' não contém linhas válidas para processar.
+    END
+
+    Log To Console    ✓ Arquivo '${file_path}' validado: ${num_dados} registro(s) encontrado(s)
+
+    RETURN            ${dados_processados}
     # Retorna uma lista de listas: [[Nome, Status, URL], ...]
 
 
