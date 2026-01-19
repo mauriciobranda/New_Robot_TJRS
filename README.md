@@ -9,6 +9,7 @@ Este projeto automatiza o processo de:
 ✅ Upload automático para Google Drive
 ✅ Registro de logs detalhados com timestamp
 ✅ Execução programada diariamente (Cloud Scheduler)
+✅ Notificações automáticas por email com resumo da execução
 
 🚀 Características
 
@@ -18,6 +19,7 @@ Agendamento: Execução automática via Cloud Scheduler
 Armazenamento: Upload automático para Google Drive via API
 Escalável: Processa múltiplas consultas em lote
 Logs Completos: Rastreamento de todas as operações
+📧 Notificações por Email: Alertas automáticos ao final de cada execução
 
 🛠️ Tecnologias
 
@@ -70,6 +72,7 @@ Para instruções detalhadas, consulte:
 
 📖 GUIA-DE-DEPLOY.md
 📁 CONFIGURAR-GOOGLE-DRIVE.md
+📧 EMAIL_SETUP.md - Configuração de notificações por email
 
 📊 Formato dos Dados
 Arquivo de Entrada (nomes.csv)

@@ -9,6 +9,13 @@ Library           DateTime
 ${BROWSER}        chrome
 ${OUTPUT_DIR}   G:/My Drive/ProcessosRobo/Arquivos_Robo
 
+# Email Configuration - Set these as environment variables or update directly
+${SMTP_SERVER}    smtp.gmail.com
+${SMTP_PORT}      587
+${SENDER_EMAIL}   %{SENDER_EMAIL=your-email@gmail.com}
+${SENDER_PASSWORD}    %{SENDER_PASSWORD=your-app-password}
+${RECIPIENT_EMAILS}   %{RECIPIENT_EMAILS=recipient@example.com}
+
 *** Keywords ***
 
 Open Browser To Site
@@ -171,3 +178,62 @@ Log With Timestamp
     ${timestamp}=      Get Current Date    result_format=%Y-%m-%d %H:%M:%S
     Log To Console     [${timestamp}] ${message}
     Append To File     ${OUTPUT_DIR}/logs.txt      [${timestamp}] ${message}\n
+
+
+Send Email Notification
+    [Documentation]    Envia email com resumo da execução do script
+    [Arguments]        ${total_processados}    ${total_sucesso}    ${total_erros}    ${execution_time}
+
+    ${timestamp}=      Get Current Date    result_format=%Y-%m-%d %H:%M:%S
+    ${date_only}=      Get Current Date    result_format=%d/%m/%Y
+
+    # Determina o status geral
+    ${status}=         Set Variable If    ${total_erros} > 0    ⚠️ CONCLUÍDO COM ERROS    ✅ CONCLUÍDO COM SUCESSO
+
+    # Monta o corpo do email em HTML
+    ${email_body}=     Catenate    SEPARATOR=\n
+    ...    <html>
+    ...    <head><style>
+    ...    body { font-family: Arial, sans-serif; }
+    ...    .header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; }
+    ...    .content { padding: 20px; }
+    ...    .stats { background-color: #f1f1f1; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    ...    .stat-item { margin: 8px 0; font-size: 16px; }
+    ...    .footer { background-color: #f1f1f1; padding: 10px; text-align: center; font-size: 12px; color: #666; }
+    ...    </style></head>
+    ...    <body>
+    ...    <div class="header">
+    ...    <h1>🤖 Robot TJRS - Relatório de Execução</h1>
+    ...    </div>
+    ...    <div class="content">
+    ...    <h2>${status}</h2>
+    ...    <div class="stats">
+    ...    <div class="stat-item"><strong>📅 Data/Hora:</strong> ${timestamp}</div>
+    ...    <div class="stat-item"><strong>👥 Total Processados:</strong> ${total_processados}</div>
+    ...    <div class="stat-item"><strong>✅ Sucessos:</strong> ${total_sucesso}</div>
+    ...    <div class="stat-item"><strong>❌ Erros:</strong> ${total_erros}</div>
+    ...    <div class="stat-item"><strong>⏱️ Tempo de Execução:</strong> ${execution_time}</div>
+    ...    </div>
+    ...    <p><strong>📁 Arquivos salvos em:</strong><br>Google Drive → ProcessosRobo → Arquivos_Robo</p>
+    ...    <p>Os resultados incluem:</p>
+    ...    <ul>
+    ...    <li>Arquivos CSV individuais para cada pessoa processada</li>
+    ...    <li>Log de URLs consultadas (log-url.csv)</li>
+    ...    <li>Log detalhado de execução (logs.txt)</li>
+    ...    </ul>
+    ...    </div>
+    ...    <div class="footer">
+    ...    <p>Este é um email automático do Robot TJRS. Não responda a esta mensagem.</p>
+    ...    </div>
+    ...    </body>
+    ...    </html>
+
+    # Assunto do email
+    ${subject}=        Catenate    Robot TJRS - Execução ${date_only} - ${status}
+
+    # Envia o email usando Python
+    ${result}=         Evaluate
+    ...    import smtplib; from email.mime.text import MIMEText; from email.mime.multipart import MIMEMultipart; msg = MIMEMultipart('alternative'); msg['Subject'] = '''${subject}'''; msg['From'] = '''${SENDER_EMAIL}'''; msg['To'] = '''${RECIPIENT_EMAILS}'''; html_part = MIMEText('''${email_body}''', 'html', 'utf-8'); msg.attach(html_part); server = smtplib.SMTP('${SMTP_SERVER}', ${SMTP_PORT}); server.starttls(); server.login('''${SENDER_EMAIL}''', '''${SENDER_PASSWORD}'''); server.send_message(msg); server.quit(); 'Email enviado com sucesso'
+
+    Log To Console     ${result}
+    Log With Timestamp    Email de notificação enviado para: ${RECIPIENT_EMAILS}
