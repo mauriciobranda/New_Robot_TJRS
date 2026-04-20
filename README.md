@@ -10,7 +10,7 @@ Este projeto automatiza o processo de:
 ✅ Registro de logs detalhados com timestamp
 ✅ Execução programada diariamente (Cloud Scheduler)
 
-🚀 Características
+🚀 Características Gerais
 
 Headless Mode: Execução em segundo plano sem interface gráfica
 Cloud Native: Deploy containerizado no Google Cloud Run
